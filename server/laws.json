@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "platform": "Rwanda Laws Platform",
+    "version": "1.0.0",
+    "primarySource": "Rwanda Law Reform Commission",
+    "primarySourceUrl": "https://www.rlrc.gov.rw/mandate/laws-of-rwanda",
+    "portalUrl": "https://amategeko.gov.rw/",
+    "lawsDirectory": "https://www.rlrc.gov.rw/mandate/laws-of-rwanda?tx_filelist_filelist%5Baction%5D=list&tx_filelist_filelist%5Bcontroller%5D=File&tx_filelist_filelist%5Bpath%5D=%2Fuser_upload%2FRLRC%2FLaws_of_Rwanda_v2%2FDomestic_laws%2FLaws_in_force%2F",
+    "lastChecked": "2026-08-28",
+    "totalLaws": 0,
+    "sourceType": "Official RLRC Laws in force collection"
+  },
+  "laws": []
+}

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Rwanda Laws Platform | Amategeko y'u Rwanda</title>
+
+  <meta
+    name="description"
+    content="Rwanda Laws Platform - urubuga rwo gushakisha, gusoma no gusobanukirwa amategeko y'u Rwanda."
+  >
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- =========================
+       HEADER
+  ========================== -->
+  <header class="site-header">
+
+    <div class="container header-content">
+
+      <a href="#home" class="brand">
+        <div class="brand-logo">🇷🇼</div>
+
+        <div class="brand-text">
+          <strong>Rwanda Laws</strong>
+          <span>Platform</span>
+        </div>
+      </a>
+
+      <nav class="main-nav">
+        <a href="#home" data-i18n="nav.home">Ahabanza</a>
+        <a href="#categories" data-i18n="nav.categories">Ibyiciro</a>
+        <a href="#laws" data-i18n="nav.laws">Amategeko</a>
+        <a href="#sources" data-i18n="nav.sources">Inkomoko</a>
+      </nav>
+
+      <!-- LANGUAGE SELECTOR -->
+      <div class="language-selector">
+
+        <button
+          class="language-btn"
+          id="languageBtn"
+          type="button"
+        >
+          🇷🇼 RW ▾
+        </button>
+
+        <div
+          class="language-menu"
+          id="languageMenu"
+        >
+
+          <button
+            type="button"
+            data-language="rw"
+          >
+            🇷🇼 Kinyarwanda
+          </button>
+
+          <button
+            type="button"
+            data-language="en"
+          >
+            🇬🇧 English
+          </button>
+
+          <button
+            type="button"
+            data-language="fr"
+          >
+            🇫🇷 Français
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <main>
+
+    <!-- =========================
+         HERO
+    ========================== -->
+    <section id="home" class="hero">
+
+      <div class="container hero-content">
+
+        <div class="hero-text">
+
+          <div class="hero-badge">
+            🇷🇼
+            <span data-i18n="hero.badge">
+              Amategeko y'u Rwanda
+            </span>
+          </div>
+
+          <h1>
+            <span data-i18n="hero.title">
+              Menya amategeko.
+            </span>
+
+            <span data-i18n="hero.subtitle">
+              Sobanukirwa n'uburenganzira bwawe.
+            </span>
+          </h1>
+
+          <p data-i18n="hero.description">
+            Rwanda Laws Platform igufasha gushakisha, gusoma no
+            gusobanukirwa amategeko n'amabwiriza y'u Rwanda ahantu hamwe.
+          </p>
+
+
+          <!-- SEARCH -->
+          <div class="search-box">
+
+            <input
+              type="search"
+              id="lawSearch"
+              placeholder="Shakisha itegeko, ingingo cyangwa ijambo..."
+              autocomplete="off"
+            >
+
+            <button
+              type="button"
+              id="searchBtn"
+            >
+              🔎
+              <span data-i18n="search.button">
+                Shakisha
+              </span>
+            </button>
+
+          </div>
+
+
+          <!-- POPULAR SEARCHES -->
+          <div class="popular-searches">
+
+            <span data-i18n="search.popular">
+              Shakisha:
+            </span>
+
+            <button
+              type="button"
+              class="popular-search"
+              data-search="Itegeko Nshinga"
+            >
+              Itegeko Nshinga
+            </button>
+
+            <button
+              type="button"
+              class="popular-search"
+              data-search="Imitungo"
+            >
+              Imitungo
+            </button>
+
+            <button
+              type="button"
+              class="popular-search"
+              data-search="Umuryango"
+            >
+              Umuryango
+            </button>
+
+            <button
+              type="button"
+              class="popular-search"
+              data-search="Ubucuruzi"
+            >
+              Ubucuruzi
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- HERO CARD -->
+        <div class="hero-card">
+
+          <div class="hero-card-icon">
+            ⚖️
+          </div>
+
+          <h2 data-i18n="hero.card.title">
+            Amategeko mu buryo bworoshye
+          </h2>
+
+          <p data-i18n="hero.card.description">
+            Shaka amakuru y'amategeko vuba kandi uyasome
+            mu buryo bworoshye kumva.
+          </p>
+
+          <div class="hero-card-line"></div>
+
+          <div class="hero-stat">
+
+            <strong id="lawCount">
+              0
+            </strong>
+
+            <span data-i18n="hero.card.count">
+              Amategeko
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         CATEGORIES
+    ========================== -->
+    <section
+      id="categories"
+      class="section"
+    >
+
+      <div class="container">
+
+        <div class="section-heading">
+
+          <div>
+
+            <span class="section-label">
+              BROWSE BY CATEGORY
+            </span>
+
+            <h2 data-i18n="categories.title">
+              Ibyiciro by'amategeko
+            </h2>
+
+            <p data-i18n="categories.description">
+              Hitamo icyiciro ushaka kugira ngo ubone amategeko ajyanye na cyo.
+            </p>
+
+          </div>
+
+          <button
+            class="view-all-btn"
+            id="viewAllCategories"
+            type="button"
+          >
+            Reba byose →
+          </button>
+
+        </div>
+
+
+        <div class="categories-grid">
+
+          <button
+            class="category-card"
+            data-category="Constitution"
+            type="button"
+          >
+            <span class="category-icon">🏛️</span>
+            <strong>Itegeko Nshinga</strong>
+            <small>Constitutional Law</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Criminal"
+            type="button"
+          >
+            <span class="category-icon">⚖️</span>
+            <strong>Amategeko Mpanabyaha</strong>
+            <small>Criminal Law</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Civil"
+            type="button"
+          >
+            <span class="category-icon">👥</span>
+            <strong>Amategeko Mbonezamubano</strong>
+            <small>Civil Law</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Business"
+            type="button"
+          >
+            <span class="category-icon">💼</span>
+            <strong>Ubucuruzi</strong>
+            <small>Business Law</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Family"
+            type="button"
+          >
+            <span class="category-icon">👨‍👩‍👧</span>
+            <strong>Umuryango</strong>
+            <small>Family Law</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Land"
+            type="button"
+          >
+            <span class="category-icon">🏠</span>
+            <strong>Ubutaka n'Imitungo</strong>
+            <small>Land & Property</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Labour"
+            type="button"
+          >
+            <span class="category-icon">👷</span>
+            <strong>Umurimo</strong>
+            <small>Labour Law</small>
+          </button>
+
+
+          <button
+            class="category-card"
+            data-category="Environment"
+            type="button"
+          >
+            <span class="category-icon">🌱</span>
+            <strong>Ibidukikije</strong>
+            <small>Environmental Law</small>
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         LAWS
+    ========================== -->
+    <section
+      id="laws"
+      class="section laws-section"
+    >
+
+      <div class="container">
+
+        <div class="section-heading">
+
+          <div>
+
+            <span class="section-label">
+              LEGAL LIBRARY
+            </span>
+
+            <h2 data-i18n="laws.title">
+              Amategeko ariho
+            </h2>
+
+            <p data-i18n="laws.description">
+              Reba amategeko aboneka kuri Rwanda Laws Platform.
+            </p>
+
+          </div>
+
+
+          <!-- CATEGORY FILTER -->
+          <div class="law-filter">
+
+            <select id="categoryFilter">
+
+              <option value="all">
+                Ibyiciro byose
+              </option>
+
+              <option value="Constitution">
+                Itegeko Nshinga
+              </option>
+
+              <option value="Criminal">
+                Mpanabyaha
+              </option>
+
+              <option value="Civil">
+                Mbonezamubano
+              </option>
+
+              <option value="Business">
+                Ubucuruzi
+              </option>
+
+              <option value="Family">
+                Umuryango
+              </option>
+
+              <option value="Land">
+                Ubutaka n'Imitungo
+              </option>
+
+              <option value="Labour">
+                Umurimo
+              </option>
+
+              <option value="Environment">
+                Ibidukikije
+              </option>
+
+            </select>
+
+          </div>
+
+        </div>
+
+
+        <!-- API LAW CARDS -->
+        <div
+          id="lawsGrid"
+          class="laws-grid"
+        >
+
+          <div class="loading-card">
+
+            <div class="loading-spinner"></div>
+
+            <p data-i18n="laws.loading">
+              Turimo gushaka amategeko...
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- NO RESULTS -->
+        <div
+          id="noResults"
+          class="no-results hidden"
+        >
+
+          <div>🔍</div>
+
+          <h3 data-i18n="laws.noResults.title">
+            Nta tegeko ribonetse
+          </h3>
+
+          <p data-i18n="laws.noResults.description">
+            Gerageza irindi jambo cyangwa uhitemo ikindi cyiciro.
+          </p>
+
+        </div>
+
+
+        <!-- LAW DETAILS -->
+        <div
+          id="law-details"
+          class="law-details-container"
+        ></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         OFFICIAL SOURCES
+    ========================== -->
+    <section
+      id="sources"
+      class="sources-section"
+    >
+
+      <div class="container">
+
+        <div class="sources-content">
+
+          <div class="sources-text">
+
+            <span class="section-label">
+              TRUSTED SOURCES
+            </span>
+
+            <h2 data-i18n="sources.title">
+              Amakuru ashingiye ku masoko yizewe
+            </h2>
+
+            <p data-i18n="sources.description">
+              Rwanda Laws Platform igamije gutanga amakuru y'amategeko
+              mu buryo bworoshye kandi bufasha abaturage kuyasobanukirwa.
+              Aho bishoboka, amakuru ajyanwa ku masoko ya Leta y'u Rwanda.
+            </p>
+
+          </div>
+
+
+          <div class="sources-list">
+
+            <a
+              href="https://www.rlrc.gov.rw/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="source-card"
+            >
+
+              <span>⚖️</span>
+
+              <div>
+
+                <strong>
+                  Rwanda Law Reform Commission
+                </strong>
+
+                <small>
+                  Official legal source
+                </small>
+
+              </div>
+
+              <b>↗</b>
+
+            </a>
+
+
+            <a
+              href="https://www.parliament.gov.rw/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="source-card"
+            >
+
+              <span>🏛️</span>
+
+              <div>
+
+                <strong>
+                  Parliament of Rwanda
+                </strong>
+
+                <small>
+                  Official Parliament website
+                </small>
+
+              </div>
+
+              <b>↗</b>
+
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         CTA
+    ========================== -->
+    <section class="cta-section">
+
+      <div class="container">
+
+        <div class="cta-box">
+
+          <div>
+
+            <span class="section-label">
+              RWANDA LAWS PLATFORM
+            </span>
+
+            <h2 data-i18n="cta.title">
+              Amategeko agomba kumvikana na buri wese.
+            </h2>
+
+            <p data-i18n="cta.description">
+              Turimo kubaka urubuga ruzafasha Abanyarwanda kubona
+              amakuru y'amategeko mu buryo bworoshye kandi bwihuse.
+            </p>
+
+          </div>
+
+
+          <a
+            href="#laws"
+            class="cta-button"
+            data-i18n="cta.button"
+          >
+            Tangira gushakisha →
+          </a>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================
+       FOOTER
+  ========================== -->
+  <footer class="site-footer">
+
+    <div class="container footer-content">
+
+      <div class="footer-brand">
+
+        <div class="brand">
+
+          <div class="brand-logo">
+            🇷🇼
+          </div>
+
+          <div class="brand-text">
+
+            <strong>
+              Rwanda Laws
+            </strong>
+
+            <span>
+              Platform
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <p data-i18n="footer.description">
+          Gufasha buri wese gusobanukirwa amategeko y'u Rwanda.
+        </p>
+
+      </div>
+
+
+      <div class="footer-links">
+
+        <div>
+
+          <h3 data-i18n="footer.platform">
+            Platform
+          </h3>
+
+          <a
+            href="#home"
+            data-i18n="nav.home"
+          >
+            Ahabanza
+          </a>
+
+          <a
+            href="#categories"
+            data-i18n="nav.categories"
+          >
+            Ibyiciro
+          </a>
+
+          <a
+            href="#laws"
+            data-i18n="nav.laws"
+          >
+            Amategeko
+          </a>
+
+        </div>
+
+
+        <div>
+
+          <h3 data-i18n="footer.information">
+            Amakuru
+          </h3>
+
+          <a
+            href="#sources"
+            data-i18n="nav.sources"
+          >
+            Official Sources
+          </a>
+
+          <a href="#">
+            Privacy
+          </a>
+
+          <a href="#">
+            Terms
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="footer-bottom">
+
+      <div class="container footer-bottom-content">
+
+        <span>
+          © 2026 Rwanda Laws Platform. All rights reserved.
+        </span>
+
+        <strong>
+          Developed by IRAKOZE BERTIN
+        </strong>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <!-- =========================
+       JAVASCRIPT
+  ========================== -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>

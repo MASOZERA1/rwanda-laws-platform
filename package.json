@@ -1,0 +1,32 @@
+{
+  "name": "rwanda-laws-platform",
+  "version": "1.0.0",
+  "description": "A national legal information platform for Rwanda",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MASOZERA1/rwanda-laws-platform.git"
+  },
+  "keywords": [
+    "rwanda",
+    "laws",
+    "legal",
+    "justice"
+  ],
+  "author": "GAD MASOZERA",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MASOZERA1/rwanda-laws-platform/issues"
+  },
+  "homepage": "https://github.com/MASOZERA1/rwanda-laws-platform#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  }
+}
