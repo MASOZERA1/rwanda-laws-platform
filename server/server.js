@@ -14,11 +14,9 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use(
-    express.urlencoded({
-        extended: true
-    })
-);
+app.use(express.urlencoded({
+    extended: true
+}));
 
 // ======================================================
 // STATIC WEBSITE
@@ -41,20 +39,25 @@ const lawsFile = path.join(
 
 function loadLaws() {
     try {
+
         if (!fs.existsSync(lawsFile)) {
+
             console.log(
                 "❌ laws.json not found:",
                 lawsFile
             );
+
             return [];
         }
 
-        const raw = fs.readFileSync(
-            lawsFile,
-            "utf8"
-        );
+        const raw =
+            fs.readFileSync(
+                lawsFile,
+                "utf8"
+            );
 
-        const data = JSON.parse(raw);
+        const data =
+            JSON.parse(raw);
 
         if (Array.isArray(data)) {
             return data;
@@ -71,6 +74,7 @@ function loadLaws() {
         return [];
 
     } catch (error) {
+
         console.error(
             "❌ Error reading laws.json:",
             error.message
@@ -85,66 +89,73 @@ function loadLaws() {
 // ======================================================
 
 function cleanText(value) {
+
     return String(value || "")
         .replace(/[_]+/g, " ")
         .replace(/\s+/g, " ")
         .trim();
+
 }
 
 function normalizeText(value) {
+
     return cleanText(value)
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+
 }
 
-function getTitle(law) {
+function getLawTitle(law) {
+
     return cleanText(
         law.title ||
         law.fileName ||
         law.number ||
+        law.lawNumber ||
         "Itegeko"
     );
+
 }
 
-function getCategory(law) {
+function getLawNumber(law) {
+
+    return cleanText(
+        law.number ||
+        law.lawNumber ||
+        ""
+    );
+
+}
+
+function getLawCategory(law) {
+
     return cleanText(
         law.category ||
         ""
     );
+
 }
 
-function getPdf(law) {
+function getLawSource(law) {
+
+    return cleanText(
+        law.officialSource ||
+        law.source ||
+        "RLRC"
+    );
+
+}
+
+function getLawPdf(law) {
+
     return (
         law.pdfUrl ||
         law.pdf ||
         law.url ||
         ""
     );
-}
 
-function getSource(law) {
-    return cleanText(
-        law.officialSource ||
-        law.source ||
-        "Rwanda Law Reform Commission"
-    );
-}
-
-function getNumber(law) {
-    return cleanText(
-        law.number ||
-        law.lawNumber ||
-        ""
-    );
-}
-
-function displayCategory(category) {
-    return cleanText(category)
-        .replace(
-            /^\d+(\.\d+)*\s*[._-]*\s*/i,
-            ""
-        );
 }
 
 // ======================================================
@@ -153,17 +164,20 @@ function displayCategory(category) {
 
 function searchLaws(query) {
 
-    const laws = loadLaws();
+    const laws =
+        loadLaws();
 
-    const search = normalizeText(query);
+    const search =
+        normalizeText(query);
 
     if (!search) {
         return [];
     }
 
-    const words = search
-        .split(/\s+/)
-        .filter(Boolean);
+    const words =
+        search
+            .split(/\s+/)
+            .filter(Boolean);
 
     return laws
         .map(law => {
@@ -185,12 +199,14 @@ function searchLaws(query) {
 
             let score = 0;
 
+            // Exact phrase
             if (
                 searchableText.includes(search)
             ) {
                 score += 10;
             }
 
+            // Individual words
             words.forEach(word => {
 
                 if (
@@ -207,291 +223,130 @@ function searchLaws(query) {
             };
 
         })
-        .filter(
-            item => item.score > 0
-        )
+        .filter(item => item.score > 0)
         .sort(
             (a, b) =>
                 b.score - a.score
         )
-        .map(
-            item => item.law
-        );
+        .map(item => item.law);
+
 }
 
 // ======================================================
-// CATEGORIES FROM laws.json
+// WEBSITE HOME
 // ======================================================
 
-function getCategories() {
+app.get("/", (req, res) => {
 
-    const laws = loadLaws();
+    res.sendFile(
+        path.join(
+            __dirname,
+            "../public/index.html"
+        )
+    );
 
-    const categories = [];
+});
 
-    const seen = new Set();
+// ======================================================
+// HEALTH
+// ======================================================
 
-    laws.forEach(law => {
+app.get("/api/health", (req, res) => {
 
-        const raw =
-            getCategory(law);
+    res.json({
 
-        if (!raw) {
-            return;
-        }
+        success: true,
 
-        const key =
-            normalizeText(raw);
+        message:
+            "Rwanda Laws Platform API is running",
 
-        if (!seen.has(key)) {
+        platform:
+            "Rwanda Laws Platform",
 
-            seen.add(key);
-
-            categories.push({
-                raw,
-                display:
-                    displayCategory(raw)
-            });
-
-        }
+        version:
+            "1.0.0"
 
     });
 
-    return categories;
-}
+});
 
 // ======================================================
-// LAWS BY CATEGORY
+// ALL LAWS
 // ======================================================
 
-function lawsByCategory(category) {
+app.get("/api/laws", (req, res) => {
 
-    const laws = loadLaws();
+    const laws =
+        loadLaws();
 
-    const wanted =
-        normalizeText(category);
+    res.json({
 
-    return laws.filter(law => {
+        success: true,
 
-        const actual =
-            normalizeText(
-                law.category
+        language:
+            req.query.language || "rw",
+
+        count:
+            laws.length,
+
+        lastChecked:
+            new Date()
+                .toISOString()
+                .slice(0, 10),
+
+        laws
+
+    });
+
+});
+
+// ======================================================
+// ONE LAW
+// ======================================================
+
+app.get(
+    "/api/laws/:id",
+    (req, res) => {
+
+        const laws =
+            loadLaws();
+
+        const law =
+            laws.find(
+                item =>
+                    String(item.id) ===
+                    String(req.params.id)
             );
 
-        return (
-            actual === wanted ||
-            actual.includes(wanted) ||
-            wanted.includes(actual)
-        );
+        if (!law) {
 
-    });
-}
+            return res
+                .status(404)
+                .json({
 
-// ======================================================
-// LANGUAGE TEXT
-// ======================================================
+                    success: false,
 
-const languageText = {
+                    message:
+                        "Law not found"
 
-    rw: {
+                });
 
-        welcome:
-            "CON 🇷🇼 RWANDA LAWS PLATFORM\n" +
-            "Hitamo ururimi:\n" +
-            "1. Kinyarwanda\n" +
-            "2. English\n" +
-            "3. Français",
+        }
 
-        menu:
-            "CON 🇷🇼 AMATEGEKO Y'U RWANDA\n" +
-            "1. Shaka itegeko\n" +
-            "2. Ibyiciro by'amategeko\n" +
-            "3. Amategeko mashya\n" +
-            "4. Ubufasha\n" +
-            "0. Sohoka",
+        res.json({
 
-        search:
-            "CON SHAKA ITEGEKO\n" +
-            "Andika ijambo ushaka.\n" +
-            "Urugero: umurimo",
+            success: true,
 
-        categories:
-            "CON IBYICIRO BY'AMATEGEKO",
+            law
 
-        recent:
-            "CON AMATEGEKO MASHYA",
-
-        help:
-            "END Rwanda Laws Platform 🇷🇼\n" +
-            "Shakisha itegeko ukoresheje ijambo " +
-            "cyangwa icyiciro.",
-
-        exit:
-            "END Murakoze gukoresha " +
-            "Rwanda Laws Platform 🇷🇼",
-
-        noResults:
-            "END Nta tegeko ribonetse.",
-
-        choose:
-            "CON HITAMO ITEGEKO",
-
-        info:
-            "Amakuru",
-
-        pdf:
-            "PDF",
-
-        sms:
-            "Ohereza SMS",
-
-        back:
-            "Subira",
-
-        noPdf:
-            "END PDF y'iri tegeko ntibonetse.",
-
-        smsReceived:
-            "END Ubusabe bwo kohereza SMS bwakiriwe."
-
-    },
-
-    en: {
-
-        welcome:
-            "CON 🇷🇼 RWANDA LAWS PLATFORM\n" +
-            "Choose your language:\n" +
-            "1. Kinyarwanda\n" +
-            "2. English\n" +
-            "3. Français",
-
-        menu:
-            "CON 🇷🇼 RWANDA LAWS\n" +
-            "1. Search for a law\n" +
-            "2. Browse law categories\n" +
-            "3. Recent laws\n" +
-            "4. Help\n" +
-            "0. Exit",
-
-        search:
-            "CON SEARCH FOR A LAW\n" +
-            "Enter a word to search.\n" +
-            "Example: labour",
-
-        categories:
-            "CON LAW CATEGORIES",
-
-        recent:
-            "CON RECENT LAWS",
-
-        help:
-            "END Rwanda Laws Platform 🇷🇼\n" +
-            "Search for a law using a keyword " +
-            "or browse categories.",
-
-        exit:
-            "END Thank you for using " +
-            "Rwanda Laws Platform 🇷🇼",
-
-        noResults:
-            "END No law was found.",
-
-        choose:
-            "CON SELECT A LAW",
-
-        info:
-            "Information",
-
-        pdf:
-            "PDF",
-
-        sms:
-            "Send SMS",
-
-        back:
-            "Back",
-
-        noPdf:
-            "END PDF for this law was not found.",
-
-        smsReceived:
-            "END SMS request received."
-
-    },
-
-    fr: {
-
-        welcome:
-            "CON 🇷🇼 RWANDA LAWS PLATFORM\n" +
-            "Choisissez votre langue:\n" +
-            "1. Kinyarwanda\n" +
-            "2. English\n" +
-            "3. Français",
-
-        menu:
-            "CON 🇷🇼 LOIS DU RWANDA\n" +
-            "1. Rechercher une loi\n" +
-            "2. Catégories des lois\n" +
-            "3. Lois récentes\n" +
-            "4. Aide\n" +
-            "0. Quitter",
-
-        search:
-            "CON RECHERCHER UNE LOI\n" +
-            "Entrez un mot à rechercher.\n" +
-            "Exemple: travail",
-
-        categories:
-            "CON CATÉGORIES DES LOIS",
-
-        recent:
-            "CON LOIS RÉCENTES",
-
-        help:
-            "END Rwanda Laws Platform 🇷🇼\n" +
-            "Recherchez une loi avec un mot-clé " +
-            "ou parcourez les catégories.",
-
-        exit:
-            "END Merci d'utiliser " +
-            "Rwanda Laws Platform 🇷🇼",
-
-        noResults:
-            "END Aucune loi trouvée.",
-
-        choose:
-            "CON CHOISISSEZ UNE LOI",
-
-        info:
-            "Informations",
-
-        pdf:
-            "PDF",
-
-        sms:
-            "Envoyer par SMS",
-
-        back:
-            "Retour",
-
-        noPdf:
-            "END Le PDF de cette loi est introuvable.",
-
-        smsReceived:
-            "END Demande d'envoi SMS reçue."
+        });
 
     }
-
-};
-
-// ======================================================
-// SESSION LANGUAGE MEMORY
-// ======================================================
-
-const sessions = new Map();
+);
 
 // ======================================================
-// USSD
+// 🇷🇼 USSD
+// AFRICA'S TALKING
 // ======================================================
 
 app.post(
@@ -502,6 +357,9 @@ app.post(
 
             const sessionId =
                 req.body.sessionId || "";
+
+            const serviceCode =
+                req.body.serviceCode || "";
 
             const phoneNumber =
                 req.body.phoneNumber || "";
@@ -525,6 +383,11 @@ app.post(
             );
 
             console.log(
+                "Service:",
+                serviceCode
+            );
+
+            console.log(
                 "Phone:",
                 phoneNumber
             );
@@ -539,87 +402,7 @@ app.post(
             );
 
             // ==================================================
-            // NEW SESSION
-            // ==================================================
-
-            if (!sessions.has(sessionId)) {
-
-                sessions.set(
-                    sessionId,
-                    {
-                        language: null
-                    }
-                );
-
-            }
-
-            const session =
-                sessions.get(sessionId);
-
-            // ==================================================
-            // LANGUAGE SELECTION
-            // ==================================================
-
-            if (
-                session.language === null
-            ) {
-
-                if (text === "") {
-
-                    return res
-                        .type("text/plain")
-                        .send(
-                            languageText.rw.welcome
-                        );
-
-                }
-
-                if (text === "1") {
-
-                    session.language =
-                        "rw";
-
-                } else if (
-                    text === "2"
-                ) {
-
-                    session.language =
-                        "en";
-
-                } else if (
-                    text === "3"
-                ) {
-
-                    session.language =
-                        "fr";
-
-                } else {
-
-                    return res
-                        .type("text/plain")
-                        .send(
-                            languageText.rw.welcome
-                        );
-
-                }
-
-                return res
-                    .type("text/plain")
-                    .send(
-                        languageText[
-                            session.language
-                        ].menu
-                    );
-
-            }
-
-            const lang =
-                languageText[
-                    session.language
-                ];
-
-            // ==================================================
-            // MAIN MENU
+            // FIRST MENU
             // ==================================================
 
             if (text === "") {
@@ -627,13 +410,18 @@ app.post(
                 return res
                     .type("text/plain")
                     .send(
-                        lang.menu
+                        "CON 🇷🇼 RWANDA LAWS PLATFORM\n" +
+                        "1. Shaka itegeko\n" +
+                        "2. Ibyiciro by'amategeko\n" +
+                        "3. Amategeko mashya\n" +
+                        "4. Ubufasha\n" +
+                        "0. Sohoka"
                     );
 
             }
 
             // ==================================================
-            // SEARCH
+            // SEARCH MENU
             // ==================================================
 
             if (text === "1") {
@@ -641,7 +429,9 @@ app.post(
                 return res
                     .type("text/plain")
                     .send(
-                        lang.search
+                        "CON SHAKA ITEGEKO\n" +
+                        "Andika ijambo ushaka.\n" +
+                        "Urugero: umurimo"
                     );
 
             }
@@ -652,51 +442,23 @@ app.post(
 
             if (text === "2") {
 
-                const categories =
-                    getCategories();
-
-                if (
-                    categories.length === 0
-                ) {
-
-                    return res
-                        .type("text/plain")
-                        .send(
-                            lang.noResults
-                        );
-
-                }
-
-                const page =
-                    categories.slice(
-                        0,
-                        7
-                    );
-
-                let message =
-                    lang.categories +
-                    "\n";
-
-                page.forEach(
-                    (category, index) => {
-
-                        message +=
-                            `${index + 1}. ${category.display.substring(0, 35)}\n`;
-
-                    }
-                );
-
-                message +=
-                    `0. ${lang.back}`;
-
                 return res
                     .type("text/plain")
-                    .send(message);
+                    .send(
+                        "CON IBYICIRO\n" +
+                        "1. Criminal\n" +
+                        "2. Civil\n" +
+                        "3. Business\n" +
+                        "4. Labour\n" +
+                        "5. Land\n" +
+                        "6. Family\n" +
+                        "0. Subira"
+                    );
 
             }
 
             // ==================================================
-            // RECENT LAWS
+            // RECENT / NEW LAWS
             // ==================================================
 
             if (text === "3") {
@@ -711,32 +473,28 @@ app.post(
                     return res
                         .type("text/plain")
                         .send(
-                            lang.noResults
+                            "END Nta mategeko yabonetse."
                         );
 
                 }
 
                 const recent =
-                    laws.slice(
-                        0,
-                        5
-                    );
+                    laws.slice(0, 5);
 
                 let message =
-                    lang.recent +
-                    "\n";
+                    "END AMATEGEKO:\n";
 
                 recent.forEach(
                     (law, index) => {
 
+                        const title =
+                            getLawTitle(law);
+
                         message +=
-                            `${index + 1}. ${getTitle(law).substring(0, 45)}\n`;
+                            `${index + 1}. ${title.substring(0, 45)}\n`;
 
                     }
                 );
-
-                message +=
-                    `0. ${lang.back}`;
 
                 return res
                     .type("text/plain")
@@ -753,7 +511,9 @@ app.post(
                 return res
                     .type("text/plain")
                     .send(
-                        lang.help
+                        "END Rwanda Laws Platform 🇷🇼\n" +
+                        "Shaka itegeko ukoresheje ijambo. " +
+                        "Urugero: umurimo, ubutaka, ubucuruzi."
                     );
 
             }
@@ -764,22 +524,19 @@ app.post(
 
             if (text === "0") {
 
-                sessions.delete(
-                    sessionId
-                );
-
                 return res
                     .type("text/plain")
                     .send(
-                        lang.exit
+                        "END Murakoze gukoresha Rwanda Laws Platform 🇷🇼"
                     );
 
             }
 
             // ==================================================
-            // SEARCH QUERY
+            // SEARCH RESULT
             //
-            // 1*keyword
+            // Example:
+            // 1*umurimo
             // ==================================================
 
             if (
@@ -802,32 +559,32 @@ app.post(
                     return res
                         .type("text/plain")
                         .send(
-                            lang.noResults
+                            "END Nta tegeko ribonetse kuri:\n" +
+                            query
                         );
 
                 }
 
-                const page =
-                    results.slice(
-                        0,
-                        5
-                    );
+                const limitedResults =
+                    results.slice(0, 5);
 
                 let message =
-                    lang.choose +
-                    "\n";
+                    "CON AMATEGEKO YABONETSE:\n";
 
-                page.forEach(
+                limitedResults.forEach(
                     (law, index) => {
 
+                        const title =
+                            getLawTitle(law);
+
                         message +=
-                            `${index + 1}. ${getTitle(law).substring(0, 45)}\n`;
+                            `${index + 1}. ${title.substring(0, 55)}\n`;
 
                     }
                 );
 
                 message +=
-                    `0. ${lang.back}`;
+                    "0. Subira";
 
                 return res
                     .type("text/plain")
@@ -836,9 +593,10 @@ app.post(
             }
 
             // ==================================================
-            // SEARCH RESULT SELECTION
+            // SELECT SEARCH RESULT
             //
-            // 1*keyword*number
+            // Example:
+            // 1*umurimo*1
             // ==================================================
 
             if (
@@ -870,288 +628,159 @@ app.post(
                     return res
                         .type("text/plain")
                         .send(
-                            lang.noResults
+                            "END Ihitamo ntabwo ribonetse."
                         );
 
                 }
 
                 const law =
-                    results[
-                        selected - 1
-                    ];
+                    results[selected - 1];
 
-                return showLawMenu(
-                    law,
-                    session.language,
-                    res
-                );
-
-            }
-
-            // ==================================================
-            // CATEGORY SELECTION
-            //
-            // 2*number
-            // ==================================================
-
-            if (
-                text.startsWith("2*") &&
-                text.split("*").length === 2
-            ) {
-
-                const selected =
-                    parseInt(
-                        text.split("*")[1],
-                        10
-                    );
-
-                const categories =
-                    getCategories();
-
-                if (
-                    !selected ||
-                    selected < 1 ||
-                    selected > categories.length
-                ) {
-
-                    return res
-                        .type("text/plain")
-                        .send(
-                            lang.noResults
-                        );
-
-                }
+                const title =
+                    getLawTitle(law);
 
                 const category =
-                    categories[
-                        selected - 1
-                    ];
+                    getLawCategory(law);
 
-                const results =
-                    lawsByCategory(
-                        category.raw
-                    );
+                const number =
+                    getLawNumber(law);
 
-                if (
-                    results.length === 0
-                ) {
-
-                    return res
-                        .type("text/plain")
-                        .send(
-                            lang.noResults
-                        );
-
-                }
-
-                let message =
-                    "CON " +
-                    category.display +
-                    "\n";
-
-                results
-                    .slice(0, 5)
-                    .forEach(
-                        (law, index) => {
-
-                            message +=
-                                `${index + 1}. ${getTitle(law).substring(0, 45)}\n`;
-
-                        }
-                    );
-
-                message +=
-                    `0. ${lang.back}`;
+                const pdf =
+                    getLawPdf(law);
 
                 return res
                     .type("text/plain")
-                    .send(message);
+                    .send(
+                        "CON " +
+                        title.substring(0, 80) +
+                        "\n" +
+                        (number
+                            ? "No: " +
+                              number.substring(0, 30) +
+                              "\n"
+                            : "") +
+                        (category
+                            ? "Category: " +
+                              category.substring(0, 35) +
+                              "\n"
+                            : "") +
+                        "1. Amakuru\n" +
+                        "2. PDF\n" +
+                        "3. Ohereza SMS\n" +
+                        "0. Subira"
+                    );
 
             }
 
             // ==================================================
-            // CATEGORY LAW SELECTION
+            // LAW INFORMATION
             //
-            // 2*category*law
+            // Example:
+            // 1*umurimo*1*1
             // ==================================================
 
             if (
-                text.startsWith("2*") &&
-                text.split("*").length === 3
+                text.startsWith("1*") &&
+                text.split("*").length === 4
             ) {
 
                 const parts =
                     text.split("*");
 
-                const categoryNumber =
-                    parseInt(
-                        parts[1],
-                        10
-                    );
+                const query =
+                    parts[1].trim();
 
-                const lawNumber =
+                const selected =
                     parseInt(
                         parts[2],
                         10
                     );
 
-                const categories =
-                    getCategories();
-
-                if (
-                    !categoryNumber ||
-                    categoryNumber < 1 ||
-                    categoryNumber > categories.length
-                ) {
-
-                    return res
-                        .type("text/plain")
-                        .send(
-                            lang.noResults
-                        );
-
-                }
-
-                const category =
-                    categories[
-                        categoryNumber - 1
-                    ];
+                const action =
+                    parts[3];
 
                 const results =
-                    lawsByCategory(
-                        category.raw
-                    );
+                    searchLaws(query);
 
                 if (
-                    !lawNumber ||
-                    lawNumber < 1 ||
-                    lawNumber > results.length
+                    !selected ||
+                    selected < 1 ||
+                    selected > results.length
                 ) {
 
                     return res
                         .type("text/plain")
                         .send(
-                            lang.noResults
+                            "END Itegeko ntabwo ribonetse."
                         );
 
                 }
 
                 const law =
-                    results[
-                        lawNumber - 1
-                    ];
+                    results[selected - 1];
 
-                return showLawMenu(
-                    law,
-                    session.language,
-                    res
-                );
+                const title =
+                    getLawTitle(law);
 
-            }
+                const category =
+                    getLawCategory(law);
 
-            // ==================================================
-            // LAW ACTION
-            //
-            // LAW*ID*ACTION
-            // ==================================================
-
-            if (
-                text.startsWith("LAW*")
-            ) {
-
-                const parts =
-                    text.split("*");
-
-                const lawId =
-                    parts[1];
-
-                const action =
-                    parts[2];
-
-                const laws =
-                    loadLaws();
-
-                const law =
-                    laws.find(
-                        item =>
-                            String(item.id) ===
-                            String(lawId)
+                const status =
+                    cleanText(
+                        law.status ||
+                        "unknown"
                     );
 
-                if (!law) {
+                const source =
+                    getLawSource(law);
 
-                    return res
-                        .type("text/plain")
-                        .send(
-                            lang.noResults
-                        );
-
-                }
+                const pdf =
+                    getLawPdf(law);
 
                 // ------------------------------------------
-                // INFORMATION
+                // ACTION 1 - INFORMATION
                 // ------------------------------------------
 
                 if (
-                    action === "INFO"
+                    action === "1"
                 ) {
-
-                    const title =
-                        getTitle(law);
-
-                    const category =
-                        displayCategory(
-                            getCategory(law)
-                        );
-
-                    const status =
-                        cleanText(
-                            law.status ||
-                            "unknown"
-                        );
-
-                    const source =
-                        getSource(law);
 
                     return res
                         .type("text/plain")
                         .send(
-                            "CON " +
-                            title.substring(0, 55) +
+                            "CON AMAKURU\n" +
+                            title.substring(0, 70) +
                             "\n" +
                             "Category: " +
-                            category.substring(0, 25) +
+                            category.substring(0, 30) +
                             "\n" +
                             "Status: " +
                             status.substring(0, 20) +
                             "\n" +
                             "Source: " +
-                            source.substring(0, 25) +
-                            "\n1. PDF\n" +
+                            source.substring(0, 30) +
+                            "\n" +
+                            "1. PDF\n" +
                             "2. SMS\n" +
-                            "0. " +
-                            lang.back
+                            "0. Subira"
                         );
 
                 }
 
                 // ------------------------------------------
-                // PDF
+                // ACTION 2 - PDF
                 // ------------------------------------------
 
                 if (
-                    action === "PDF"
+                    action === "2"
                 ) {
-
-                    const pdf =
-                        getPdf(law);
 
                     if (!pdf) {
 
                         return res
                             .type("text/plain")
                             .send(
-                                lang.noPdf
+                                "END PDF y'iri tegeko ntibonetse."
                             );
 
                     }
@@ -1159,48 +788,41 @@ app.post(
                     return res
                         .type("text/plain")
                         .send(
-                            "END PDF:\n" +
+                            "END PDF y'itegeko iboneka kuri website ya Rwanda Laws Platform. " +
+                            "Link: " +
                             pdf
                         );
 
                 }
 
                 // ------------------------------------------
-                // SMS
+                // ACTION 3 - SMS
                 // ------------------------------------------
 
                 if (
-                    action === "SMS"
+                    action === "3"
                 ) {
-
-                    console.log(
-                        "📩 SMS REQUEST"
-                    );
-
-                    console.log(
-                        "Phone:",
-                        phoneNumber
-                    );
-
-                    console.log(
-                        "Law:",
-                        getTitle(law)
-                    );
 
                     return res
                         .type("text/plain")
                         .send(
-                            lang.smsReceived
+                            "END SMS request yakiriwe. " +
+                            "Tugiye kohereza amakuru y'itegeko kuri " +
+                            phoneNumber
                         );
 
                 }
 
             }
 
+            // ==================================================
+            // UNKNOWN INPUT
+            // ==================================================
+
             return res
                 .type("text/plain")
                 .send(
-                    lang.menu
+                    "END Ihitamo ntabwo rizwi. Ongera utangire."
                 );
 
         } catch (error) {
@@ -1222,73 +844,7 @@ app.post(
 );
 
 // ======================================================
-// LAW MENU
-// ======================================================
-
-function showLawMenu(
-    law,
-    language,
-    res
-) {
-
-    const title =
-        getTitle(law);
-
-    const category =
-        displayCategory(
-            getCategory(law)
-        );
-
-    let menu;
-
-    if (language === "en") {
-
-        menu =
-            "CON " +
-            title.substring(0, 65) +
-            "\nCategory: " +
-            category.substring(0, 25) +
-            "\n1. Information\n" +
-            "2. PDF\n" +
-            "3. Send SMS\n" +
-            "0. Back";
-
-    } else if (
-        language === "fr"
-    ) {
-
-        menu =
-            "CON " +
-            title.substring(0, 65) +
-            "\nCatégorie: " +
-            category.substring(0, 25) +
-            "\n1. Informations\n" +
-            "2. PDF\n" +
-            "3. Envoyer SMS\n" +
-            "0. Retour";
-
-    } else {
-
-        menu =
-            "CON " +
-            title.substring(0, 65) +
-            "\nIcyiciro: " +
-            category.substring(0, 25) +
-            "\n1. Amakuru\n" +
-            "2. PDF\n" +
-            "3. Ohereza SMS\n" +
-            "0. Subira";
-
-    }
-
-    return res
-        .type("text/plain")
-        .send(menu);
-
-}
-
-// ======================================================
-// INCOMING SMS
+// 📩 INCOMING SMS
 // ======================================================
 
 app.post(
@@ -1296,6 +852,10 @@ app.post(
     (req, res) => {
 
         try {
+
+            console.log(
+                "===================================="
+            );
 
             console.log(
                 "📩 INCOMING SMS"
@@ -1321,6 +881,10 @@ app.post(
                 req.body.linkId
             );
 
+            console.log(
+                "===================================="
+            );
+
             return res
                 .status(200)
                 .send("OK");
@@ -1342,7 +906,7 @@ app.post(
 );
 
 // ======================================================
-// SMS DELIVERY CALLBACK
+// 📩 SMS DELIVERY CALLBACK
 // ======================================================
 
 app.post(
@@ -1350,7 +914,7 @@ app.post(
     (req, res) => {
 
         console.log(
-            "📩 SMS DELIVERY"
+            "📩 SMS DELIVERY:"
         );
 
         console.log(
@@ -1431,10 +995,6 @@ app.listen(
 
         console.log(
             `📚 Laws loaded: ${laws.length}`
-        );
-
-        console.log(
-            `📂 Categories loaded: ${getCategories().length}`
         );
 
     }
