@@ -8,6 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Bwira Express aho static files ziri (Dosiye ya public)
 app.use(express.static(path.join(__dirname, "../public")));
 
 const lawsFile = path.join(__dirname, "../data/laws.json");
@@ -22,7 +24,6 @@ function loadLaws() {
         const raw = fs.readFileSync(lawsFile, "utf8");
         const data = JSON.parse(raw);
 
-        // Support different JSON structures
         if (Array.isArray(data)) return data;
         if (Array.isArray(data.laws)) return data.laws;
         if (Array.isArray(data.data)) return data.data;
@@ -33,6 +34,11 @@ function loadLaws() {
         return [];
     }
 }
+
+// KOSORA "NOT FOUND": Iyi "route" niyo ifungura index.html iyo umuntu aje ku rubuga
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/index.html"));
+});
 
 app.get("/api/health", (req, res) => {
     res.json({
@@ -45,7 +51,6 @@ app.get("/api/health", (req, res) => {
 
 app.get("/api/laws", (req, res) => {
     const laws = loadLaws();
-
     res.json({
         success: true,
         language: req.query.language || "rw",
@@ -57,7 +62,6 @@ app.get("/api/laws", (req, res) => {
 
 app.get("/api/laws/:id", (req, res) => {
     const laws = loadLaws();
-
     const law = laws.find(
         item => String(item.id) === String(req.params.id)
     );
@@ -68,11 +72,7 @@ app.get("/api/laws/:id", (req, res) => {
             message: "Law not found"
         });
     }
-
-    res.json({
-        success: true,
-        law
-    });
+    res.json({ success: true, law });
 });
 
 app.listen(PORT, () => {
