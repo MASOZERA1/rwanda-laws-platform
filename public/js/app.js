@@ -1,3 +1,4 @@
+
 // ======================================================
 // 🇷🇼 RWANDA LAWS PLATFORM
 // Main Frontend Application
@@ -174,7 +175,6 @@ function getCategoryKey(law) {
     return raw;
   }
 
-  // Backup: inspect file name/path
   const text = [
     law.title || "",
     law.fileName || "",
@@ -256,11 +256,10 @@ function getPdf(law) {
 // ======================================================
 
 function getSimpleExplanation(law) {
-
   if (currentLanguage === "rw") {
     return (
       law.descriptionRw ||
-      "Iri ni tegeko riri mu bubiko bw'amategeko y'u Rwanda. Fungura PDF yemewe kugira ngo usome ibikubiyemo byose."
+      "Iri ni itegeko riri mu bubiko bw'amategeko y'u Rwanda. Fungura PDF yemewe kugira ngo usome ibikubiyemo byose."
     );
   }
 
@@ -278,13 +277,134 @@ function getSimpleExplanation(law) {
 }
 
 // ======================================================
+// NORMALIZE SEARCH TEXT
+// ======================================================
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ======================================================
+// MULTILINGUAL SEARCH DICTIONARY
+// ======================================================
+
+const searchSynonyms = {
+  family: [
+    "family", "umuryango", "imiryango",
+    "famille", "familles"
+  ],
+
+  land: [
+    "land", "ubutaka", "butaka",
+    "terre", "foncier", "fonciere"
+  ],
+
+  labour: [
+    "labour", "labor", "umurimo",
+    "abakozi", "akazi", "travail",
+    "travailleur", "travailleurs"
+  ],
+
+  business: [
+    "business", "ubucuruzi",
+    "company", "companies", "sosiyete",
+    "entreprise", "entreprises",
+    "commerce"
+  ],
+
+  criminal: [
+    "criminal", "crime", "ibyaha",
+    "icyaha", "mpanabyaha",
+    "penal", "penale", "droit penal"
+  ],
+
+  civil: [
+    "civil", "mbonezamubano",
+    "civile", "droit civil"
+  ],
+
+  human_rights: [
+    "human rights", "uburenganzira",
+    "uburenganzira bwa muntu",
+    "droits humains", "droits de l homme"
+  ],
+
+  taxation: [
+    "tax", "taxation", "imisoro",
+    "umusoro", "amakori",
+    "fiscalite", "impot", "impots"
+  ],
+
+  security: [
+    "security", "umutekano",
+    "securite"
+  ],
+
+  diplomatic: [
+    "diplomatic", "diplomacy",
+    "diplomasi", "amasezerano",
+    "diplomatique"
+  ],
+
+  judicial: [
+    "judicial", "ubucamanza",
+    "justice", "judiciaire"
+  ],
+
+  administrative: [
+    "administrative", "ubutegetsi",
+    "imiyoborere", "administratif"
+  ],
+
+  constitution: [
+    "constitution", "itegeko nshinga",
+    "amateko shingiro", "constitutional",
+    "constitutionnel"
+  ]
+};
+
+// ======================================================
+// EXPAND SEARCH TERMS
+// ======================================================
+
+function expandSearchTerms(searchTerm) {
+  const normalizedQuery = normalizeSearchText(searchTerm);
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const terms = new Set([normalizedQuery]);
+
+  for (const synonyms of Object.values(searchSynonyms)) {
+    const normalizedSynonyms = synonyms.map(normalizeSearchText);
+
+    if (
+      normalizedSynonyms.some(term =>
+        term === normalizedQuery ||
+        normalizedQuery.includes(term) ||
+        term.includes(normalizedQuery)
+      )
+    ) {
+      normalizedSynonyms.forEach(term => terms.add(term));
+    }
+  }
+
+  return [...terms].filter(Boolean);
+}
+
+// ======================================================
 // LOAD LAWS
 // ======================================================
 
 async function loadLaws() {
-
   try {
-
     showLoading();
 
     const response = await fetch(API_URL);
@@ -309,11 +429,9 @@ async function loadLaws() {
     }
 
     populateCategoryFilter();
-
     renderLaws(getFilteredLaws());
 
   } catch (error) {
-
     console.error("Law loading error:", error);
 
     if (lawsGrid) {
@@ -324,7 +442,6 @@ async function loadLaws() {
         </div>
       `;
     }
-
   }
 }
 
@@ -333,7 +450,6 @@ async function loadLaws() {
 // ======================================================
 
 function showLoading() {
-
   if (!lawsGrid) return;
 
   lawsGrid.innerHTML = `
@@ -351,7 +467,6 @@ function showLoading() {
 // ======================================================
 
 function populateCategoryFilter() {
-
   if (!categoryFilter) return;
 
   const categories = [
@@ -366,6 +481,8 @@ function populateCategoryFilter() {
     "9._Civil",
     "10._Business"
   ];
+
+  const previousValue = categoryFilter.value || "all";
 
   categoryFilter.innerHTML = "";
 
@@ -382,7 +499,6 @@ function populateCategoryFilter() {
   categoryFilter.appendChild(allOption);
 
   categories.forEach(category => {
-
     const option = document.createElement("option");
 
     option.value = category;
@@ -390,38 +506,49 @@ function populateCategoryFilter() {
 
     categoryFilter.appendChild(option);
   });
+
+  if (
+    [...categoryFilter.options].some(
+      option => option.value === previousValue
+    )
+  ) {
+    categoryFilter.value = previousValue;
+  }
 }
 
 // ======================================================
-// FILTER LAWS
+// FILTER LAWS - MULTILINGUAL
 // ======================================================
 
 function getFilteredLaws() {
+  const searchTerm = lawSearch?.value.trim() || "";
+  const searchTerms = expandSearchTerms(searchTerm);
 
-  const searchTerm =
-    lawSearch?.value.trim().toLowerCase() || "";
-
-  const selectedCategory =
-    categoryFilter?.value || "all";
+  const selectedCategory = categoryFilter?.value || "all";
 
   return allLaws.filter(law => {
-
     const categoryKey = getCategoryKey(law);
 
-    const searchableText = [
+    const searchableText = normalizeSearchText([
       law.title || "",
+      law.titleRw || "",
+      law.titleFr || "",
       law.fileName || "",
       law.number || "",
       law.lawNumber || "",
       law.description || "",
-      law.category || ""
-    ]
-      .join(" ")
-      .toLowerCase();
+      law.descriptionRw || "",
+      law.descriptionEn || "",
+      law.descriptionFr || "",
+      law.category || "",
+      getCategoryName(categoryKey)
+    ].join(" "));
 
     const matchesSearch =
-      !searchTerm ||
-      searchableText.includes(searchTerm);
+      searchTerms.length === 0 ||
+      searchTerms.some(term =>
+        searchableText.includes(term)
+      );
 
     const matchesCategory =
       selectedCategory === "all" ||
@@ -436,15 +563,12 @@ function getFilteredLaws() {
 // ======================================================
 
 function renderLaws(laws) {
-
   if (!lawsGrid) return;
 
   lawsGrid.innerHTML = "";
 
   if (!laws.length) {
-
     noResults?.classList.remove("hidden");
-
     return;
   }
 
@@ -452,8 +576,7 @@ function renderLaws(laws) {
 
   const fragment = document.createDocumentFragment();
 
-  laws.forEach((law, index) => {
-
+  laws.forEach(law => {
     const card = document.createElement("article");
 
     card.className = "law-card";
@@ -469,9 +592,7 @@ function renderLaws(laws) {
     const pdf = getPdf(law);
 
     card.innerHTML = `
-
       <div class="law-card-top">
-
         <span class="law-category">
           ${escapeHTML(category)}
         </span>
@@ -485,7 +606,6 @@ function renderLaws(laws) {
             `
             : ""
         }
-
       </div>
 
       <h3>
@@ -497,7 +617,6 @@ function renderLaws(laws) {
       </p>
 
       <div class="law-card-footer">
-
         <span class="official-source">
           🇷🇼 ${escapeHTML(
             law.officialSource ||
@@ -512,12 +631,10 @@ function renderLaws(laws) {
         >
           ${translations[currentLanguage].readLaw} →
         </button>
-
       </div>
     `;
 
-    const button =
-      card.querySelector(".read-law-btn");
+    const button = card.querySelector(".read-law-btn");
 
     button?.addEventListener("click", () => {
       showLawDetails(law);
@@ -534,7 +651,6 @@ function renderLaws(laws) {
 // ======================================================
 
 function showLawDetails(law) {
-
   if (!lawDetails) return;
 
   const title = getTitle(law);
@@ -542,9 +658,7 @@ function showLawDetails(law) {
   const pdf = getPdf(law);
 
   lawDetails.innerHTML = `
-
     <div class="law-details-card">
-
       <button
         type="button"
         class="back-laws-btn"
@@ -566,7 +680,6 @@ function showLawDetails(law) {
       </p>
 
       <div class="law-details-info">
-
         <div>
           <strong>
             ${translations[currentLanguage].category}
@@ -604,7 +717,6 @@ function showLawDetails(law) {
             )}
           </span>
         </div>
-
       </div>
 
       ${
@@ -616,8 +728,7 @@ function showLawDetails(law) {
               rel="noopener noreferrer"
               class="official-pdf-button"
             >
-              📄 ${translations[currentLanguage].officialPDF}
-              →
+              📄 ${translations[currentLanguage].officialPDF} →
             </a>
           `
           : `
@@ -626,15 +737,12 @@ function showLawDetails(law) {
             </p>
           `
       }
-
     </div>
   `;
 
-  const backButton =
-    document.getElementById("backToLaws");
+  const backButton = document.getElementById("backToLaws");
 
   backButton?.addEventListener("click", () => {
-
     lawDetails.innerHTML = "";
 
     renderLaws(getFilteredLaws());
@@ -644,7 +752,6 @@ function showLawDetails(law) {
       ?.scrollIntoView({
         behavior: "smooth"
       });
-
   });
 
   lawDetails.scrollIntoView({
@@ -658,7 +765,6 @@ function showLawDetails(law) {
 // ======================================================
 
 function performSearch() {
-
   renderLaws(getFilteredLaws());
 
   document
@@ -676,11 +782,9 @@ searchBtn?.addEventListener(
 lawSearch?.addEventListener(
   "keydown",
   event => {
-
     if (event.key === "Enter") {
       performSearch();
     }
-
   }
 );
 
@@ -698,11 +802,7 @@ lawSearch?.addEventListener(
 categoryFilter?.addEventListener(
   "change",
   () => {
-
-    renderLaws(
-      getFilteredLaws()
-    );
-
+    renderLaws(getFilteredLaws());
   }
 );
 
@@ -713,11 +813,8 @@ categoryFilter?.addEventListener(
 document
   .querySelectorAll(".category-card")
   .forEach(card => {
-
     card.addEventListener("click", () => {
-
-      const category =
-        card.dataset.category;
+      const category = card.dataset.category;
 
       if (!categoryFilter) return;
 
@@ -735,18 +832,14 @@ document
       categoryFilter.value =
         categoryConversion[category] || "all";
 
-      renderLaws(
-        getFilteredLaws()
-      );
+      renderLaws(getFilteredLaws());
 
       document
         .getElementById("laws")
         ?.scrollIntoView({
           behavior: "smooth"
         });
-
     });
-
   });
 
 // ======================================================
@@ -756,20 +849,15 @@ document
 document
   .querySelectorAll(".popular-search")
   .forEach(button => {
-
     button.addEventListener("click", () => {
-
-      const value =
-        button.dataset.search || "";
+      const value = button.dataset.search || "";
 
       if (lawSearch) {
         lawSearch.value = value;
       }
 
       performSearch();
-
     });
-
   });
 
 // ======================================================
@@ -777,7 +865,6 @@ document
 // ======================================================
 
 function setLanguage(language) {
-
   if (!translations[language]) {
     language = "rw";
   }
@@ -785,13 +872,9 @@ function setLanguage(language) {
   currentLanguage = language;
 
   updateLanguage();
-
   populateCategoryFilter();
 
-  renderLaws(
-    getFilteredLaws()
-  );
-
+  renderLaws(getFilteredLaws());
 }
 
 // ======================================================
@@ -799,9 +882,7 @@ function setLanguage(language) {
 // ======================================================
 
 function updateLanguage() {
-
-  const translation =
-    translations[currentLanguage];
+  const translation = translations[currentLanguage];
 
   if (lawSearch) {
     lawSearch.placeholder =
@@ -811,44 +892,32 @@ function updateLanguage() {
   document
     .querySelectorAll("[data-i18n]")
     .forEach(element => {
+      const key = element.dataset.i18n;
+      const parts = key.split(" ");
 
-      const key =
-        element.dataset.i18n;
-
-      const parts =
-        key.split(".");
-
-      let value =
-        translations[currentLanguage];
+      let value = translations[currentLanguage];
 
       for (const part of parts) {
-
         if (
           value &&
-          Object.prototype.hasOwnProperty.call(
-            value,
-            part
-          )
+          Object.prototype.hasOwnProperty.call(value, part)
         ) {
           value = value[part];
         } else {
           value = null;
           break;
         }
-
       }
 
       if (typeof value === "string") {
         element.textContent = value;
       }
-
     });
 
   const languageBtn =
     document.getElementById("languageBtn");
 
   if (languageBtn) {
-
     const labels = {
       rw: "🇷🇼 RW ▾",
       en: "🇬🇧 EN ▾",
@@ -858,7 +927,6 @@ function updateLanguage() {
     languageBtn.textContent =
       labels[currentLanguage];
   }
-
 }
 
 // ======================================================
@@ -874,32 +942,23 @@ const languageMenu =
 languageBtn?.addEventListener(
   "click",
   () => {
-
     languageMenu?.classList.toggle("open");
-
   }
 );
 
 document
   .querySelectorAll("[data-language]")
   .forEach(button => {
-
     button.addEventListener(
       "click",
       () => {
-
-        const language =
-          button.dataset.language;
+        const language = button.dataset.language;
 
         setLanguage(language);
 
-        languageMenu?.classList.remove(
-          "open"
-        );
-
+        languageMenu?.classList.remove("open");
       }
     );
-
   });
 
 // ======================================================
@@ -907,7 +966,6 @@ document
 // ======================================================
 
 function escapeHTML(value) {
-
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -921,7 +979,6 @@ function escapeHTML(value) {
 // ======================================================
 
 function escapeAttribute(value) {
-
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
@@ -936,10 +993,7 @@ function escapeAttribute(value) {
 document.addEventListener(
   "DOMContentLoaded",
   () => {
-
     updateLanguage();
-
     loadLaws();
-
   }
 );
